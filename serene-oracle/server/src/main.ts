@@ -1,30 +1,38 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'; // <-- Добавили импорт
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // Твой рабочий CORS для связи с Vercel
-  app.enableCors({
-    origin: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-  });
+  // 1. Включаем CORS, чтобы твой Vercel фронтенд мог достучаться до этого бэкенда
+  app.enableCors();
 
-  // --- МАГИЯ SWAGGER ---
+  // 2. Настройка Swagger — именно здесь магия для /api-docs
   const config = new DocumentBuilder()
     .setTitle('Daily Companion API')
-    .setDescription('Документация API для приложения Daily Companion')
+    .setDescription('Документация бэкенда для мобильного приложения')
     .setVersion('1.0')
-    .addTag('Endpoints') // Тэг для группировки
+    .addBearerAuth() // Добавляет кнопку авторизации для токена
     .build();
-  
+    
   const document = SwaggerModule.createDocument(app, config);
-  // Сваггер будет доступен по ссылке /api/docs
-  SwaggerModule.setup('api/docs', app, document); 
-  // ----------------------
+  
+  // Устанавливаем путь /api-docs
+  SwaggerModule.setup('api-docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Чтобы токен не слетал при обновлении страницы
+    },
+  });
 
-  await app.listen(process.env.PORT || 3000);
+  // 3. Порт — Render сам выдает PORT, поэтому используем process.env.PORT
+  const port = process.env.PORT || 3000;
+  
+  await app.listen(port);
+  
+  logger.log(`🚀 Сервер запущен на: https://daily-companion-mvp.onrender.com`);
+  logger.log(`📖 Документация Swagger: https://daily-companion-mvp.onrender.com/api-docs`);
 }
 bootstrap();
