@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@nestjs/swagger": "^11.2.6",
+    "firebase-admin": "^13.7.0"
+  }
+}
